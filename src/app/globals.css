@@ -18,15 +18,14 @@
   --radius-card: 14px;
 }
 
-@media (prefers-color-scheme: dark) {
-  @theme {
-    --color-bg: oklch(15% 0 0);
-    --color-fg: oklch(98% 0 0);
-    --color-muted: oklch(60% 0 0);
-    --color-card: oklch(20% 0 0);
-    --color-border: oklch(28% 0 0);
-    --color-primary: oklch(70% 0.18 250);
-  }
+/* Dark mode via next-themes class toggle — must match ThemeProvider attribute="class" */
+.dark {
+  --color-bg: oklch(15% 0 0);
+  --color-fg: oklch(98% 0 0);
+  --color-muted: oklch(60% 0 0);
+  --color-card: oklch(20% 0 0);
+  --color-border: oklch(28% 0 0);
+  --color-primary: oklch(70% 0.18 250);
 }
 
 html,
