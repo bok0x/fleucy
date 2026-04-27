@@ -1,3 +1,4 @@
+import 'server-only';
 // Prisma 7 client singleton — requires @prisma/adapter-pg (driver adapter pattern).
 // In Prisma 7, PrismaClient no longer reads DATABASE_URL automatically;
 // a driver adapter must be passed explicitly.

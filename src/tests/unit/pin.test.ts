@@ -1,3 +1,20 @@
+import { vi } from 'vitest';
+
+vi.mock('@/lib/env', () => ({
+  clientEnv: {
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: 'pk_test_stub',
+    NEXT_PUBLIC_SUPABASE_URL: 'https://stub.supabase.co',
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: 'anon-stub',
+  },
+  serverEnv: () => ({
+    CLERK_SECRET_KEY: 'sk_test_stub',
+    SUPABASE_SERVICE_ROLE_KEY: 'service-role-stub',
+    DATABASE_URL: 'postgresql://stub',
+    DIRECT_URL: 'postgresql://stub',
+    PIN_SESSION_SECRET: 'stub-secret-at-least-32-characters-long',
+  }),
+}));
+
 import { describe, expect, it } from 'vitest';
 import { hashPin, isValidPin, verifyPin } from '@/lib/auth/pin';
 

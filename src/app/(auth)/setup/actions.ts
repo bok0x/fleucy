@@ -118,10 +118,11 @@ export async function setTelegramAction(formData: FormData): Promise<void> {
   const chatId = enabled ? parsed.chatId?.trim() || null : null;
 
   const admin = supabaseAdmin();
-  await admin
+  const { error } = await admin
     .from('app_settings')
     .update({ telegram_enabled: enabled, telegram_chat_id: chatId })
     .eq('owner_id', userId);
+  if (error) throw new Error(error.message);
 }
 
 export async function completeSetupAction(): Promise<void> {
