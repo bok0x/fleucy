@@ -1,0 +1,269 @@
+// Fleucy schema — all phases. RLS enabled in companion migration.
+// Money is bigint fen (1 RMB = 100 fen). owner_id is the Clerk user id (text).
+// Prisma 7: generator is "prisma-client", output to src/generated/prisma.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AccountKind {
+  cash
+  bank
+  mobile_wallet
+}
+
+enum TxType {
+  income
+  expense
+}
+
+enum Cadence {
+  daily
+  weekly
+  monthly
+  yearly
+}
+
+enum DebtDirection {
+  owed_to_me
+  i_owe
+}
+
+enum DebtStatus {
+  open
+  partially_paid
+  settled
+  written_off
+}
+
+enum NotificationKind {
+  recurring_due
+  debt_due
+  budget_overrun
+  low_balance
+}
+
+enum Severity {
+  info
+  warning
+  critical
+}
+
+model Account {
+  id                     String      @id @default(uuid()) @db.Uuid
+  ownerId                String      @map("owner_id")
+  name                   String
+  kind                   AccountKind
+  icon                   String      @default("wallet")
+  color                  String      @default("#3b82f6")
+  openingBalanceFen      BigInt      @default(0) @map("opening_balance_fen")
+  lowBalanceThresholdFen BigInt?     @map("low_balance_threshold_fen")
+  isArchived             Boolean     @default(false) @map("is_archived")
+  sortOrder              Int         @default(0) @map("sort_order")
+  createdAt              DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  transactions    Transaction[] @relation("AccountTransactions")
+  recurringRules  RecurringRule[]
+  debtsOriginated Debt[]        @relation("DebtOriginAccount")
+  debtPayments    DebtPayment[]
+
+  @@index([ownerId])
+  @@map("accounts")
+}
+
+model Category {
+  id        String   @id @default(uuid()) @db.Uuid
+  ownerId   String   @map("owner_id")
+  type      TxType
+  name      String
+  icon      String   @default("circle")
+  color     String   @default("#6b7280")
+  isSystem  Boolean  @default(false) @map("is_system")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  transactions   Transaction[]
+  recurringRules RecurringRule[]
+  budgets        Budget[]
+
+  @@index([ownerId, type])
+  @@map("categories")
+}
+
+model Person {
+  id              String   @id @default(uuid()) @db.Uuid
+  ownerId         String   @map("owner_id")
+  fullName        String   @map("full_name")
+  phone           String?
+  email           String?
+  relationshipTag String?  @map("relationship_tag")
+  notes           String?
+  avatarUrl       String?  @map("avatar_url")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  debts Debt[]
+
+  @@index([ownerId])
+  @@map("people")
+}
+
+model Transaction {
+  id              String    @id @default(uuid()) @db.Uuid
+  ownerId         String    @map("owner_id")
+  accountId       String    @map("account_id") @db.Uuid
+  categoryId      String    @map("category_id") @db.Uuid
+  type            TxType
+  amountFen       BigInt    @map("amount_fen")
+  occurredAt      DateTime  @map("occurred_at") @db.Timestamptz(6)
+  note            String?
+  receiptUrl      String?   @map("receipt_url")
+  recurringRuleId String?   @map("recurring_rule_id") @db.Uuid
+  isPending       Boolean   @default(false) @map("is_pending")
+  debtId          String?   @map("debt_id") @db.Uuid
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  account       Account        @relation("AccountTransactions", fields: [accountId], references: [id], onDelete: Restrict)
+  category      Category       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  recurringRule RecurringRule? @relation(fields: [recurringRuleId], references: [id], onDelete: SetNull)
+  debt          Debt?          @relation(fields: [debtId], references: [id], onDelete: SetNull)
+
+  @@index([ownerId, occurredAt(sort: Desc)])
+  @@index([ownerId, accountId])
+  @@index([ownerId, categoryId])
+  @@index([ownerId, isPending])
+  @@map("transactions")
+}
+
+model Debt {
+  id              String        @id @default(uuid()) @db.Uuid
+  ownerId         String        @map("owner_id")
+  personId        String        @map("person_id") @db.Uuid
+  direction       DebtDirection
+  principalFen    BigInt        @map("principal_fen")
+  description     String?
+  dueDate         DateTime?     @map("due_date") @db.Date
+  status          DebtStatus    @default(open)
+  originAccountId String?       @map("origin_account_id") @db.Uuid
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  person        Person        @relation(fields: [personId], references: [id], onDelete: Restrict)
+  originAccount Account?      @relation("DebtOriginAccount", fields: [originAccountId], references: [id], onDelete: SetNull)
+  payments      DebtPayment[]
+  transactions  Transaction[]
+
+  @@index([ownerId, status])
+  @@index([ownerId, personId])
+  @@index([ownerId, dueDate])
+  @@map("debts")
+}
+
+model DebtPayment {
+  id        String   @id @default(uuid()) @db.Uuid
+  ownerId   String   @map("owner_id")
+  debtId    String   @map("debt_id") @db.Uuid
+  accountId String   @map("account_id") @db.Uuid
+  amountFen BigInt   @map("amount_fen")
+  paidAt    DateTime @map("paid_at") @db.Timestamptz(6)
+  note      String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  debt    Debt    @relation(fields: [debtId], references: [id], onDelete: Cascade)
+  account Account @relation(fields: [accountId], references: [id], onDelete: Restrict)
+
+  @@index([ownerId, debtId])
+  @@map("debt_payments")
+}
+
+model RecurringRule {
+  id                   String    @id @default(uuid()) @db.Uuid
+  ownerId              String    @map("owner_id")
+  name                 String
+  type                 TxType
+  accountId            String    @map("account_id") @db.Uuid
+  categoryId           String    @map("category_id") @db.Uuid
+  amountFen            BigInt    @map("amount_fen")
+  cadence              Cadence
+  dayOfMonth           Int?      @map("day_of_month")
+  dayOfWeek            Int?      @map("day_of_week")
+  startDate            DateTime  @map("start_date") @db.Date
+  endDate              DateTime? @map("end_date") @db.Date
+  lastGeneratedForDate DateTime? @map("last_generated_for_date") @db.Date
+  isActive             Boolean   @default(true) @map("is_active")
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  account      Account       @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  category     Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  transactions Transaction[]
+
+  @@index([ownerId, isActive])
+  @@map("recurring_rules")
+}
+
+model Budget {
+  id              String   @id @default(uuid()) @db.Uuid
+  ownerId         String   @map("owner_id")
+  categoryId      String?  @map("category_id") @db.Uuid
+  monthlyLimitFen BigInt   @map("monthly_limit_fen")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([ownerId, categoryId], map: "budgets_owner_category_unique")
+  @@map("budgets")
+}
+
+model Notification {
+  id             String           @id @default(uuid()) @db.Uuid
+  ownerId        String           @map("owner_id")
+  kind           NotificationKind
+  severity       Severity         @default(info)
+  title          String
+  body           String
+  linkTo         String?          @map("link_to")
+  relatedId      String?          @map("related_id") @db.Uuid
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  readAt         DateTime?        @map("read_at") @db.Timestamptz(6)
+  dismissedAt    DateTime?        @map("dismissed_at") @db.Timestamptz(6)
+  telegramSentAt DateTime?        @map("telegram_sent_at") @db.Timestamptz(6)
+
+  @@index([ownerId, createdAt(sort: Desc)])
+  @@index([ownerId, telegramSentAt])
+  @@map("notifications")
+}
+
+model AuthPin {
+  ownerId        String    @id @map("owner_id")
+  pinHash        String    @map("pin_hash")
+  failedAttempts Int       @default(0) @map("failed_attempts")
+  lockedUntil    DateTime? @map("locked_until") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("auth_pin")
+}
+
+model AppSettings {
+  ownerId               String    @id @map("owner_id")
+  baseCurrency          String    @default("CNY") @map("base_currency")
+  theme                 String    @default("system")
+  pinLockMinutes        Int       @default(10) @map("pin_lock_minutes")
+  reminderDaysBeforeDue Int       @default(3) @map("reminder_days_before_due")
+  telegramChatId        String?   @map("telegram_chat_id")
+  telegramEnabled       Boolean   @default(false) @map("telegram_enabled")
+  setupCompletedAt      DateTime? @map("setup_completed_at") @db.Timestamptz(6)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("app_settings")
+}
