@@ -3,7 +3,6 @@
 import { UserButton } from '@clerk/nextjs';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ThemeToggle } from './theme-toggle';
 
 export function Header() {
   return (
@@ -13,7 +12,6 @@ export function Header() {
         <Button variant="ghost" size="icon" aria-label="Notifications">
           <Bell className="size-4" />
         </Button>
-        <ThemeToggle />
         <UserButton appearance={{ elements: { avatarBox: 'size-7' } }} />
       </div>
     </header>

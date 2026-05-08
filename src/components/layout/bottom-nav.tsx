@@ -1,22 +1,41 @@
+'use client';
+
 import { LayoutDashboard, ListChecks, Menu, Users } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 const items = [
-  { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
-  { href: '/transactions', label: 'Tx', icon: ListChecks },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/transactions', label: 'Transactions', icon: ListChecks },
   { href: '/debts', label: 'Debts', icon: Users },
-  { href: '/settings', label: 'More', icon: Menu },
+  { href: '/settings', label: 'Settings', icon: Menu },
 ];
 
 export function BottomNav() {
+  const pathname = usePathname();
+
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-[var(--color-border)] bg-[var(--color-card)] md:hidden">
-      {items.map(({ href, label, icon: Icon }) => (
-        <Link key={href} href={href} className="flex flex-col items-center gap-1 py-2 text-xs">
-          <Icon className="size-5" />
-          {label}
-        </Link>
-      ))}
+    <nav
+      className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-[var(--color-border)] md:hidden"
+      style={{
+        backdropFilter: 'blur(12px)',
+        background: 'var(--color-sidebar-glass)',
+      }}
+    >
+      {items.map(({ href, label, icon: Icon }) => {
+        const active = pathname.startsWith(href);
+        return (
+          <Link
+            key={href}
+            href={href}
+            className="flex flex-col items-center gap-1 py-2 text-xs font-medium transition-colors"
+            style={{ color: active ? 'var(--color-primary)' : 'var(--color-muted)' }}
+          >
+            <Icon className="size-5" />
+            {label}
+          </Link>
+        );
+      })}
     </nav>
   );
 }

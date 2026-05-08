@@ -4,7 +4,7 @@ import { Sidebar } from './sidebar';
 
 export function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid min-h-screen md:grid-cols-[14rem_1fr]">
+    <div className="grid min-h-screen md:grid-cols-[64px_1fr]">
       <Sidebar />
       <div className="flex min-h-screen flex-col">
         <Header />
