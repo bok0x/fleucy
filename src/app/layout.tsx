@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Toaster } from 'sonner';
 import { QueryProvider } from '@/providers/query-provider';
 import { ThemeProvider } from '@/providers/theme-provider';
+import { PaletteProvider } from '@/providers/palette-provider';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -16,10 +17,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <html lang="en" suppressHydrationWarning>
         <body className="min-h-screen antialiased">
           <ThemeProvider>
-            <QueryProvider>
-              {children}
-              <Toaster richColors position="top-right" />
-            </QueryProvider>
+            <PaletteProvider>
+              <QueryProvider>
+                {children}
+                <Toaster richColors position="top-right" />
+              </QueryProvider>
+            </PaletteProvider>
           </ThemeProvider>
         </body>
       </html>
