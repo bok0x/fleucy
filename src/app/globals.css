@@ -16,6 +16,10 @@
   --color-warning: oklch(75% 0.15 80);
   --color-danger: oklch(60% 0.22 25);
   --radius-card: 14px;
+  --color-gradient-a: #1d4ed8;
+  --color-gradient-b: #1e40af;
+  --color-glow: rgba(37, 99, 235, 0.25);
+  --color-sidebar-glass: rgba(255, 255, 255, 0.65);
 }
 
 /* Dark mode via next-themes class toggle — must match ThemeProvider attribute="class" */
@@ -26,6 +30,7 @@
   --color-card: oklch(20% 0 0);
   --color-border: oklch(28% 0 0);
   --color-primary: oklch(70% 0.18 250);
+  --color-sidebar-glass: rgba(10, 15, 26, 0.65);
 }
 
 html,
@@ -155,4 +160,95 @@ body {
   html {
     @apply font-sans;
   }
+}
+
+/* ── Palette themes ────────────────────────────────────────────────── */
+/* Aurora – girls, purple/pink */
+[data-theme="aurora"] {
+  --color-primary: oklch(72% 0.23 308);
+  --color-primary-fg: oklch(99% 0 0);
+  --color-gradient-a: #c77dff;
+  --color-gradient-b: #7b2ff7;
+  --color-glow: rgba(199, 125, 255, 0.28);
+}
+[data-theme="aurora"].dark {
+  --color-bg: #1a0533;
+  --color-card: #2d1b69;
+  --color-border: rgba(255, 255, 255, 0.07);
+  --color-sidebar-glass: rgba(26, 5, 51, 0.7);
+}
+
+/* Blossom – girls, rose/peach */
+[data-theme="blossom"] {
+  --color-primary: oklch(65% 0.23 15);
+  --color-primary-fg: oklch(99% 0 0);
+  --color-gradient-a: #ff4d6d;
+  --color-gradient-b: #ffb347;
+  --color-glow: rgba(255, 77, 109, 0.28);
+}
+[data-theme="blossom"].dark {
+  --color-bg: #1a0e14;
+  --color-card: #2d1527;
+  --color-border: rgba(255, 255, 255, 0.07);
+  --color-sidebar-glass: rgba(26, 14, 20, 0.7);
+}
+
+/* Midnight – students, electric blue */
+[data-theme="midnight"] {
+  --color-primary: oklch(68% 0.2 220);
+  --color-primary-fg: oklch(99% 0 0);
+  --color-gradient-a: #4facfe;
+  --color-gradient-b: #00f2fe;
+  --color-glow: rgba(79, 172, 254, 0.28);
+}
+[data-theme="midnight"].dark {
+  --color-bg: #020818;
+  --color-card: #0a1628;
+  --color-border: rgba(255, 255, 255, 0.07);
+  --color-sidebar-glass: rgba(2, 8, 24, 0.7);
+}
+
+/* Slate Pro – freelancers, indigo/cyan */
+[data-theme="slate"] {
+  --color-primary: oklch(62% 0.2 264);
+  --color-primary-fg: oklch(99% 0 0);
+  --color-gradient-a: #6366f1;
+  --color-gradient-b: #0ea5e9;
+  --color-glow: rgba(99, 102, 241, 0.28);
+}
+[data-theme="slate"].dark {
+  --color-bg: #0f172a;
+  --color-card: #1e293b;
+  --color-border: rgba(255, 255, 255, 0.07);
+  --color-sidebar-glass: rgba(15, 23, 42, 0.7);
+}
+
+/* Neon – freelancers, cyberpunk */
+[data-theme="neon"] {
+  --color-primary: oklch(72% 0.22 198);
+  --color-primary-fg: oklch(5% 0 0);
+  --color-gradient-a: #00d2ff;
+  --color-gradient-b: #e100ff;
+  --color-glow: rgba(0, 210, 255, 0.35);
+}
+[data-theme="neon"].dark {
+  --color-bg: #0a0a0a;
+  --color-card: #111111;
+  --color-border: rgba(255, 255, 255, 0.06);
+  --color-sidebar-glass: rgba(10, 10, 10, 0.8);
+}
+
+/* Ocean – universal, dark + blue only */
+[data-theme="ocean"] {
+  --color-primary: oklch(58% 0.22 250);
+  --color-primary-fg: oklch(99% 0 0);
+  --color-gradient-a: #1d4ed8;
+  --color-gradient-b: #1e40af;
+  --color-glow: rgba(29, 78, 216, 0.28);
+}
+[data-theme="ocean"].dark {
+  --color-bg: #0a0f1a;
+  --color-card: #111827;
+  --color-border: rgba(255, 255, 255, 0.07);
+  --color-sidebar-glass: rgba(10, 15, 26, 0.7);
 }
