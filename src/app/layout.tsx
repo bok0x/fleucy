@@ -1,9 +1,9 @@
 import { ClerkProvider } from '@clerk/nextjs';
 import type { Metadata } from 'next';
 import { Toaster } from 'sonner';
+import { PaletteProvider } from '@/providers/palette-provider';
 import { QueryProvider } from '@/providers/query-provider';
 import { ThemeProvider } from '@/providers/theme-provider';
-import { PaletteProvider } from '@/providers/palette-provider';
 import './globals.css';
 
 export const metadata: Metadata = {

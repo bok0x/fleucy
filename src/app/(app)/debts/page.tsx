@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { AmountInput } from '@/components/feature/amount-input';
@@ -33,6 +34,7 @@ import { formatRMB } from '@/lib/money';
 function CreateDebtForm({ onSuccess }: { onSuccess: () => void }) {
   const queryClient = useQueryClient();
   const { data: people } = usePeople();
+  const hasPeople = (people?.length ?? 0) > 0;
   const [amountFen, setAmountFen] = useState(0n);
 
   const { mutate, isPending } = useMutation({
@@ -61,6 +63,16 @@ function CreateDebtForm({ onSuccess }: { onSuccess: () => void }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {!hasPeople ? (
+        <div className="space-y-2 rounded-md border border-dashed border-[var(--color-border)] p-3 text-sm">
+          <p className="text-[var(--color-muted)]">Add a person before recording a debt.</p>
+          <Button asChild variant="outline" className="w-full">
+            <Link href="/debts/people" onClick={onSuccess}>
+              Manage people
+            </Link>
+          </Button>
+        </div>
+      ) : null}
       <div className="space-y-1">
         <Label>Direction</Label>
         <Select name="direction" defaultValue="owed_to_me">
@@ -75,7 +87,7 @@ function CreateDebtForm({ onSuccess }: { onSuccess: () => void }) {
       </div>
       <div className="space-y-1">
         <Label>Person</Label>
-        <Select name="person_id" required>
+        <Select name="person_id" required disabled={!hasPeople}>
           <SelectTrigger>
             <SelectValue placeholder="Select person" />
           </SelectTrigger>
@@ -168,7 +180,7 @@ function DebtCard({ debt }: { debt: Debt }) {
 }
 
 function DebtsList({ direction }: { direction: 'owed_to_me' | 'i_owe' }) {
-  const { data, isLoading } = useDebts(direction);
+  const { data, isLoading, isError, refetch } = useDebts(direction);
   const [createOpen, setCreateOpen] = useState(false);
 
   return (
@@ -189,7 +201,14 @@ function DebtsList({ direction }: { direction: 'owed_to_me' | 'i_owe' }) {
           </DialogContent>
         </Dialog>
       </div>
-      {isLoading ? (
+      {isError ? (
+        <div className="rounded-[var(--radius-card)] border border-[var(--color-border)] p-6 text-center">
+          <p className="text-sm text-[var(--color-muted)]">Could not load debts.</p>
+          <button type="button" onClick={() => refetch()} className="mt-3 text-sm underline">
+            Retry
+          </button>
+        </div>
+      ) : isLoading ? (
         <p className="text-sm text-[var(--color-muted)]">Loading…</p>
       ) : (data ?? []).length === 0 ? (
         <p className="py-8 text-center text-sm text-[var(--color-muted)]">No open debts.</p>
@@ -208,6 +227,11 @@ export default function DebtsPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">Debts</h1>
+      <div className="flex justify-end">
+        <Button asChild size="sm" variant="outline">
+          <Link href="/debts/people">Manage people</Link>
+        </Button>
+      </div>
       <Tabs defaultValue="owed_to_me">
         <TabsList>
           <TabsTrigger value="owed_to_me">Owed to me</TabsTrigger>

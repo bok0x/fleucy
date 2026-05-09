@@ -34,5 +34,6 @@ export default clerkMiddleware(async (auth, req) => {
 });
 
 export const config = {
-  matcher: ['/((?!_next|.*\\..*).*)', '/'],
+  // Exclude Next internals, static assets, and API handlers from auth/PIN middleware.
+  matcher: ['/((?!api|_next|.*\\..*).*)', '/'],
 };

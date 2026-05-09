@@ -4,6 +4,7 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { isValidPin, setPinCookie, verifyPin } from '@/lib/auth/pin';
+import { logSecurityEvent } from '@/lib/observability';
 import { supabaseAdmin } from '@/lib/supabase/service-role';
 
 const inputSchema = z.object({ pin: z.string() });
@@ -26,6 +27,7 @@ export async function verifyPinAction(formData: FormData): Promise<VerifyResult>
 
   const parsed = inputSchema.safeParse({ pin: formData.get('pin') });
   if (!parsed.success || !isValidPin(parsed.data.pin)) {
+    logSecurityEvent({ event: 'pin_verify', userId, outcome: 'failure', detail: 'invalid_format' });
     return { ok: false, reason: 'invalid_format' };
   }
 
@@ -41,6 +43,7 @@ export async function verifyPinAction(formData: FormData): Promise<VerifyResult>
 
   const lockedUntilMs = row.locked_until ? new Date(row.locked_until as string).getTime() : 0;
   if (lockedUntilMs > Date.now()) {
+    logSecurityEvent({ event: 'pin_verify', userId, outcome: 'failure', detail: 'locked' });
     return { ok: false, reason: 'locked', lockedUntilMs };
   }
 
@@ -57,6 +60,7 @@ export async function verifyPinAction(formData: FormData): Promise<VerifyResult>
           : null,
       })
       .eq('owner_id', userId);
+    logSecurityEvent({ event: 'pin_verify', userId, outcome: 'failure', detail: 'wrong_pin' });
     return shouldLock
       ? { ok: false, reason: 'locked', lockedUntilMs: Date.now() + LOCK_MINUTES * 60_000 }
       : { ok: false, reason: 'wrong_pin', remaining: MAX_ATTEMPTS - newFailed };
@@ -73,6 +77,7 @@ export async function verifyPinAction(formData: FormData): Promise<VerifyResult>
     .update({ failed_attempts: 0, locked_until: null })
     .eq('owner_id', userId);
   await setPinCookie(userId, (settings?.pin_lock_minutes as number | null) ?? 10);
+  logSecurityEvent({ event: 'pin_verify', userId, outcome: 'success' });
   return { ok: true };
 }
 

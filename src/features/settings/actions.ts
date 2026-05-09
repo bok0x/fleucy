@@ -4,6 +4,7 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { hashPin, isValidPin, setPinCookie, verifyPin } from '@/lib/auth/pin';
+import { logSecurityEvent } from '@/lib/observability';
 import { supabaseAdmin } from '@/lib/supabase/service-role';
 
 export type SettingsResult = { ok: true } | { ok: false; error: string };
@@ -53,6 +54,7 @@ export async function changePinAction(formData: FormData): Promise<SettingsResul
     .update({ pin_hash: newHash, failed_attempts: 0, locked_until: null })
     .eq('owner_id', userId);
   if (error) return { ok: false, error: error.message };
+  logSecurityEvent({ event: 'pin_change', userId, outcome: 'success' });
 
   return { ok: true };
 }
@@ -79,6 +81,12 @@ export async function updateLockTimerAction(formData: FormData): Promise<Setting
 
   // Refresh the cookie TTL so it takes effect immediately
   await setPinCookie(userId, parsed.data.minutes);
+  logSecurityEvent({
+    event: 'pin_lock_timer_change',
+    userId,
+    outcome: 'success',
+    detail: `${parsed.data.minutes}m`,
+  });
   return { ok: true };
 }
 
@@ -102,4 +110,64 @@ export async function getAppSettingsAction(): Promise<AppSettings | null> {
     .maybeSingle();
 
   return data as AppSettings | null;
+}
+
+type ExportPayload = Record<string, unknown[]>;
+export type ExportResult = { ok: true; payload: ExportPayload } | { ok: false; error: string };
+
+async function selectAllByOwner(table: string, userId: string) {
+  const supabase = supabaseAdmin();
+  const { data, error } = await supabase.from(table).select('*').eq('owner_id', userId);
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function exportAllDataAction(): Promise<ExportResult> {
+  const { userId } = await auth();
+  if (!userId) redirect('/sign-in');
+  try {
+    const payload: ExportPayload = {
+      transactions: await selectAllByOwner('transactions', userId),
+      accounts: await selectAllByOwner('accounts', userId),
+      categories: await selectAllByOwner('categories', userId),
+      people: await selectAllByOwner('people', userId),
+      debts: await selectAllByOwner('debts', userId),
+      debt_payments: await selectAllByOwner('debt_payments', userId),
+      app_settings: await selectAllByOwner('app_settings', userId),
+      exported_at: [{ value: new Date().toISOString() }],
+    };
+    logSecurityEvent({ event: 'full_data_export', userId, outcome: 'success' });
+    return { ok: true, payload };
+  } catch (error) {
+    logSecurityEvent({ event: 'full_data_export', userId, outcome: 'failure' });
+    return { ok: false, error: error instanceof Error ? error.message : 'Export failed' };
+  }
+}
+
+export async function deleteAllDataAction(confirmText: string): Promise<SettingsResult> {
+  const { userId } = await auth();
+  if (!userId) redirect('/sign-in');
+  if (confirmText !== 'DELETE') return { ok: false, error: 'Type DELETE to confirm' };
+
+  const supabase = supabaseAdmin();
+  const tables = [
+    'debt_payments',
+    'debts',
+    'transactions',
+    'people',
+    'accounts',
+    'categories',
+    'app_settings',
+    'auth_pin',
+  ] as const;
+
+  for (const table of tables) {
+    const { error } = await supabase.from(table).delete().eq('owner_id', userId);
+    if (error) return { ok: false, error: `Failed to delete ${table}: ${error.message}` };
+  }
+
+  const { clearPinCookie } = await import('@/lib/auth/pin');
+  await clearPinCookie();
+  logSecurityEvent({ event: 'full_data_delete', userId, outcome: 'success' });
+  return { ok: true };
 }

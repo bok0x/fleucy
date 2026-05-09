@@ -5,6 +5,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { DataTable } from '@/components/ui/data-table';
 import { Input } from '@/components/ui/input';
 import {
@@ -27,7 +28,12 @@ export default function TransactionsPage() {
   const [accountId, setAccountId] = useState('');
   const [type, setType] = useState<'income' | 'expense' | ''>('');
 
-  const { data: txs, isLoading } = useTransactions({
+  const {
+    data: txs,
+    isLoading,
+    isError,
+    refetch,
+  } = useTransactions({
     search: search || undefined,
     accountId: accountId || undefined,
     type: (type as 'income' | 'expense') || undefined,
@@ -96,16 +102,22 @@ export default function TransactionsPage() {
       id: 'actions',
       header: '',
       cell: ({ row }) => (
-        <button
-          type="button"
-          onClick={() => {
-            if (confirm('Delete this transaction?')) deleteTx(row.original.id);
-          }}
-          className="text-[var(--color-muted)] hover:text-[var(--color-danger)]"
-          aria-label="Delete transaction"
-        >
-          <Trash2 className="size-4" />
-        </button>
+        <ConfirmDialog
+          title="Delete transaction"
+          description="This transaction will be removed from normal views."
+          confirmLabel="Delete"
+          variant="destructive"
+          onConfirm={() => deleteTx(row.original.id)}
+          trigger={
+            <button
+              type="button"
+              className="text-[var(--color-muted)] hover:text-[var(--color-danger)]"
+              aria-label="Delete transaction"
+            >
+              <Trash2 className="size-4" />
+            </button>
+          }
+        />
       ),
     },
   ];
@@ -156,12 +168,21 @@ export default function TransactionsPage() {
           </SelectContent>
         </Select>
       </div>
-      <DataTable
-        columns={columns}
-        data={txs ?? []}
-        isLoading={isLoading}
-        emptyMessage="No transactions yet. Add your first one."
-      />
+      {isError ? (
+        <div className="rounded-[var(--radius-card)] border border-[var(--color-border)] p-6 text-center">
+          <p className="text-sm text-[var(--color-muted)]">Could not load transactions.</p>
+          <button type="button" onClick={() => refetch()} className="mt-3 text-sm underline">
+            Retry
+          </button>
+        </div>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={txs ?? []}
+          isLoading={isLoading}
+          emptyMessage="No transactions yet. Add your first one."
+        />
+      )}
     </div>
   );
 }

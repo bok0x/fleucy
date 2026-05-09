@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { AmountInput } from '@/components/feature/amount-input';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   Dialog,
   DialogContent,
@@ -167,19 +168,25 @@ function AccountCard({ acc }: { acc: AccountBalance }) {
               onSuccess={() => setEditOpen(false)}
             />
             <div className="border-t border-[var(--color-border)] pt-3">
-              <button
-                type="button"
-                onClick={() => {
-                  if (confirm('Archive this account? It will be hidden from all views.')) {
-                    archive();
-                    setEditOpen(false);
-                  }
-                }}
+              <ConfirmDialog
+                title="Archive account"
+                description="This account will be hidden from all views."
+                confirmLabel="Archive"
+                variant="destructive"
                 disabled={archiving}
-                className="text-sm text-[var(--color-danger)] hover:underline"
-              >
-                Archive account
-              </button>
+                onConfirm={() => {
+                  archive();
+                  setEditOpen(false);
+                }}
+                trigger={
+                  <button
+                    type="button"
+                    className="text-sm text-[var(--color-danger)] hover:underline"
+                  >
+                    Archive account
+                  </button>
+                }
+              />
             </div>
           </DialogContent>
         </Dialog>
@@ -193,7 +200,7 @@ function AccountCard({ acc }: { acc: AccountBalance }) {
 }
 
 export default function AccountsPage() {
-  const { data: balances, isLoading } = useAccountBalances();
+  const { data: balances, isLoading, isError, refetch } = useAccountBalances();
   const [createOpen, setCreateOpen] = useState(false);
 
   return (
@@ -216,7 +223,14 @@ export default function AccountsPage() {
         </Dialog>
       </div>
 
-      {isLoading ? (
+      {isError ? (
+        <div className="rounded-[var(--radius-card)] border border-[var(--color-border)] p-6 text-center">
+          <p className="text-sm text-[var(--color-muted)]">Could not load accounts.</p>
+          <button type="button" onClick={() => refetch()} className="mt-3 text-sm underline">
+            Retry
+          </button>
+        </div>
+      ) : isLoading ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <div className="h-24 animate-pulse rounded-[var(--radius-card)] bg-[var(--color-border)]" />
           <div className="h-24 animate-pulse rounded-[var(--radius-card)] bg-[var(--color-border)]" />

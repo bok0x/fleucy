@@ -8,9 +8,10 @@ import { clientEnv } from '@/lib/env';
 /** Hook that returns a Supabase client with the live Clerk JWT injected per fetch. */
 export function useSupabase(): SupabaseClient {
   const { session } = useSession();
+  const env = clientEnv();
   return useMemo(
     () =>
-      createClient(clientEnv.NEXT_PUBLIC_SUPABASE_URL, clientEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+      createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
         global: {
           fetch: async (input, init) => {
             const token = (await session?.getToken({ template: 'supabase' })) ?? '';
@@ -21,6 +22,6 @@ export function useSupabase(): SupabaseClient {
         },
         auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
       }),
-    [session],
+    [env.NEXT_PUBLIC_SUPABASE_ANON_KEY, env.NEXT_PUBLIC_SUPABASE_URL, session],
   );
 }

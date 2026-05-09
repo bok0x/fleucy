@@ -4,12 +4,13 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { supabaseServer } from '@/lib/supabase/server';
+import { colorHexSchema } from '@/lib/validation';
 
 const schema = z.object({
   type: z.enum(['income', 'expense']),
-  name: z.string().min(1),
-  icon: z.string().default('circle'),
-  color: z.string().default('#6b7280'),
+  name: z.string().trim().min(1).max(100),
+  icon: z.string().trim().min(1).max(30).default('circle'),
+  color: colorHexSchema.default('#6b7280'),
 });
 
 export type CatActionResult = { ok: true } | { ok: false; error: string };

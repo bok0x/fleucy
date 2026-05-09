@@ -4,14 +4,15 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { supabaseServer } from '@/lib/supabase/server';
+import { colorHexSchema, fenSchema } from '@/lib/validation';
 
 const createSchema = z.object({
-  name: z.string().min(1),
+  name: z.string().trim().min(1).max(100),
   kind: z.enum(['cash', 'bank', 'mobile_wallet']),
-  icon: z.string().default('wallet'),
-  color: z.string().default('#3b82f6'),
-  opening_balance_fen: z.string().default('0'),
-  low_balance_threshold_fen: z.string().nullable().default(null),
+  icon: z.string().trim().min(1).max(30).default('wallet'),
+  color: colorHexSchema.default('#3b82f6'),
+  opening_balance_fen: fenSchema.default('0'),
+  low_balance_threshold_fen: fenSchema.nullable().default(null),
 });
 
 export type AccountActionResult = { ok: true } | { ok: false; error: string };

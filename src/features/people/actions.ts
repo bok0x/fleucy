@@ -4,13 +4,14 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { supabaseServer } from '@/lib/supabase/server';
+import { optionalEmailSchema, optionalPhoneSchema, optionalText } from '@/lib/validation';
 
 const schema = z.object({
-  full_name: z.string().min(1),
-  phone: z.string().optional(),
-  email: z.string().optional(),
-  relationship_tag: z.string().optional(),
-  notes: z.string().optional(),
+  full_name: z.string().trim().min(1).max(100),
+  phone: optionalPhoneSchema,
+  email: optionalEmailSchema,
+  relationship_tag: optionalText(30),
+  notes: optionalText(500),
 });
 
 export type PersonActionResult = { ok: true; id?: string } | { ok: false; error: string };
@@ -56,6 +57,15 @@ export async function updatePersonAction(
     .update(parsed.data)
     .eq('id', id)
     .eq('owner_id', userId);
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+export async function deletePersonAction(id: string): Promise<PersonActionResult> {
+  const { userId } = await auth();
+  if (!userId) redirect('/sign-in');
+  const supabase = await supabaseServer();
+  const { error } = await supabase.from('people').delete().eq('id', id).eq('owner_id', userId);
   if (error) return { ok: false, error: error.message };
   return { ok: true };
 }

@@ -93,7 +93,7 @@ function CategoryForm({ onSuccess, defaultValues }: CategoryFormProps) {
 }
 
 function CategoryList({ type }: { type: 'income' | 'expense' }) {
-  const { data, isLoading } = useCategories(type);
+  const { data, isLoading, isError, refetch } = useCategories(type);
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Category | null>(null);
 
@@ -116,7 +116,14 @@ function CategoryList({ type }: { type: 'income' | 'expense' }) {
         </Dialog>
       </div>
 
-      {isLoading ? (
+      {isError ? (
+        <div className="rounded-[var(--radius-card)] border border-[var(--color-border)] p-6 text-center">
+          <p className="text-sm text-[var(--color-muted)]">Could not load categories.</p>
+          <button type="button" onClick={() => refetch()} className="mt-3 text-sm underline">
+            Retry
+          </button>
+        </div>
+      ) : isLoading ? (
         <p className="text-sm text-[var(--color-muted)]">Loading…</p>
       ) : (
         <div className="space-y-1">

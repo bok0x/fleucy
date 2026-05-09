@@ -4,21 +4,22 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { supabaseServer } from '@/lib/supabase/server';
+import { fenSchema, isoDateSchema, optionalText } from '@/lib/validation';
 
 const debtSchema = z.object({
   person_id: z.string().uuid(),
   direction: z.enum(['owed_to_me', 'i_owe']),
-  principal_fen: z.string(),
-  description: z.string().optional(),
-  due_date: z.string().optional(),
+  principal_fen: fenSchema,
+  description: optionalText(300),
+  due_date: isoDateSchema.optional(),
 });
 
 const paymentSchema = z.object({
   debt_id: z.string().uuid(),
   account_id: z.string().uuid(),
-  amount_fen: z.string(),
-  paid_at: z.string(),
-  note: z.string().optional(),
+  amount_fen: fenSchema,
+  paid_at: isoDateSchema,
+  note: optionalText(300),
 });
 
 export type DebtActionResult = { ok: true; id?: string } | { ok: false; error: string };

@@ -4,15 +4,16 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { supabaseServer } from '@/lib/supabase/server';
+import { fenSchema, isoDateSchema, optionalText } from '@/lib/validation';
 
 const createSchema = z.object({
   account_id: z.string().uuid(),
   category_id: z.string().uuid(),
   type: z.enum(['income', 'expense']),
-  amount_fen: z.string(),
-  occurred_at: z.string(),
-  note: z.string().optional(),
-  receipt_url: z.string().optional(),
+  amount_fen: fenSchema,
+  occurred_at: isoDateSchema,
+  note: optionalText(300),
+  receipt_url: z.string().trim().url('Receipt URL must be valid').optional(),
 });
 
 export type TxActionResult = { ok: true; id?: string } | { ok: false; error: string };

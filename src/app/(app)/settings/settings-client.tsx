@@ -3,12 +3,14 @@
 import { useSession } from '@clerk/nextjs';
 import { createClient } from '@supabase/supabase-js';
 import { Download, KeyRound, Lock, Monitor, Moon, Sun, Timer } from 'lucide-react';
+import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import Papa from 'papaparse';
 import { useTransition } from 'react';
 import { toast } from 'sonner';
 import { lockNowAction } from '@/app/(auth)/lock/actions';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -18,7 +20,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { changePinAction, updateLockTimerAction } from '@/features/settings/actions';
+import {
+  changePinAction,
+  deleteAllDataAction,
+  exportAllDataAction,
+  updateLockTimerAction,
+} from '@/features/settings/actions';
 import { clientEnv } from '@/lib/env';
 import { fenToDisplay } from '@/lib/money';
 
@@ -46,11 +53,14 @@ function SectionCard({ title, children }: { title: string; children: React.React
 }
 
 export function SettingsClient({ initialLockMinutes }: Props) {
+  const env = clientEnv();
   const { theme, setTheme } = useTheme();
   const { session } = useSession();
   const [pinPending, startPin] = useTransition();
   const [timerPending, startTimer] = useTransition();
   const [exportPending, startExport] = useTransition();
+  const [fullExportPending, startFullExport] = useTransition();
+  const [deletePending, startDelete] = useTransition();
   const [lockPending, startLock] = useTransition();
 
   function handleChangePinSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -80,14 +90,10 @@ export function SettingsClient({ initialLockMinutes }: Props) {
     startExport(async () => {
       try {
         const token = (await session?.getToken({ template: 'supabase' })) ?? '';
-        const sb = createClient(
-          clientEnv.NEXT_PUBLIC_SUPABASE_URL,
-          clientEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-          {
-            global: token ? { headers: { Authorization: `Bearer ${token}` } } : undefined,
-            auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-          },
-        );
+        const sb = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+          global: token ? { headers: { Authorization: `Bearer ${token}` } } : undefined,
+          auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+        });
 
         const { data, error } = await sb
           .from('transactions')
@@ -118,6 +124,26 @@ export function SettingsClient({ initialLockMinutes }: Props) {
       } catch {
         toast.error('Export failed');
       }
+    });
+  }
+
+  function handleFullExport() {
+    startFullExport(async () => {
+      const result = await exportAllDataAction();
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+      const blob = new Blob([JSON.stringify(result.payload, null, 2)], {
+        type: 'application/json;charset=utf-8;',
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `fleucy-full-export-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Full data export downloaded');
     });
   }
 
@@ -248,6 +274,64 @@ export function SettingsClient({ initialLockMinutes }: Props) {
           <Download className="size-4" />
           {exportPending ? 'Exporting…' : 'Export transactions CSV'}
         </Button>
+        <Button
+          variant="outline"
+          disabled={fullExportPending}
+          onClick={handleFullExport}
+          className="w-full"
+        >
+          <Download className="size-4" />
+          {fullExportPending ? 'Exporting…' : 'Export full account data (JSON)'}
+        </Button>
+      </SectionCard>
+
+      <SectionCard title="Trust & Legal">
+        <div className="space-y-2 text-sm">
+          <p className="text-[var(--color-muted)]">
+            Fleucy stores your data under your account and supports full export/deletion controls.
+          </p>
+          <div className="flex gap-2">
+            <Button asChild variant="outline" className="flex-1">
+              <Link href="/privacy">Privacy Policy</Link>
+            </Button>
+            <Button asChild variant="outline" className="flex-1">
+              <Link href="/terms">Terms of Service</Link>
+            </Button>
+          </div>
+          <Button asChild variant="outline" className="w-full">
+            <Link href="/support">Contact Support</Link>
+          </Button>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Danger Zone">
+        <p className="text-sm text-[var(--color-muted)]">
+          Permanently delete all your Fleucy data. This cannot be undone.
+        </p>
+        <ConfirmDialog
+          title="Delete all account data"
+          description='To confirm deletion, type "DELETE" in the prompt.'
+          confirmLabel={deletePending ? 'Deleting…' : 'Delete all data'}
+          variant="destructive"
+          disabled={deletePending}
+          onConfirm={async () => {
+            const confirmText = window.prompt('Type DELETE to confirm permanent deletion') ?? '';
+            startDelete(async () => {
+              const result = await deleteAllDataAction(confirmText);
+              if (result.ok) {
+                toast.success('All data deleted');
+                window.location.href = '/setup';
+              } else {
+                toast.error(result.error);
+              }
+            });
+          }}
+          trigger={
+            <Button variant="destructive" className="w-full" disabled={deletePending}>
+              Delete all account data
+            </Button>
+          }
+        />
       </SectionCard>
     </div>
   );

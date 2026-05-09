@@ -10,6 +10,7 @@ const DEFAULT_EXPENSE_CATEGORIES = [
   { name: 'Food', icon: 'utensils', color: '#f97316' },
   { name: 'Transport', icon: 'car', color: '#0ea5e9' },
   { name: 'Shopping', icon: 'shopping-bag', color: '#a855f7' },
+  { name: 'Monthly subscrition', icon: 'repeat', color: '#0d9488' },
   { name: 'Subscriptions', icon: 'repeat', color: '#14b8a6' },
   { name: 'Bills', icon: 'receipt', color: '#64748b' },
   { name: 'Entertainment', icon: 'film', color: '#ec4899' },
