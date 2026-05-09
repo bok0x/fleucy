@@ -7,6 +7,7 @@ import { BentoGrid } from '@/features/dashboard/tiles/bento-grid';
 import { CategoryTile } from '@/features/dashboard/tiles/category-tile';
 import { NetWorthTile } from '@/features/dashboard/tiles/net-worth-tile';
 import { StatTile } from '@/features/dashboard/tiles/stat-tile';
+import { SubscriptionsTile } from '@/features/dashboard/tiles/subscriptions-tile';
 import { TrendChartTile } from '@/features/dashboard/tiles/trend-chart-tile';
 import { QuickAddModal } from '../transactions/quick-add-modal';
 
@@ -68,6 +69,7 @@ export default function DashboardPage() {
         {/* Row 1 */}
         <NetWorthTile />
         <AccountsTile />
+        <SubscriptionsTile />
 
         {/* Row 2 */}
         <MonthStats />
