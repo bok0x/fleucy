@@ -260,7 +260,7 @@ function SubscriptionCard({ sub }: SubscriptionCardProps) {
     onError: (e) => toast.error(e.message),
   });
 
-  const { mutate: remove } = useMutation({
+  const { mutateAsync: removeAsync, isPending: removing } = useMutation({
     mutationFn: () => deleteSubscriptionAction(sub.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: SUBSCRIPTIONS_KEY });
@@ -366,13 +366,16 @@ function SubscriptionCard({ sub }: SubscriptionCardProps) {
               variant="ghost"
               className="size-8 text-[var(--color-danger)]"
               title="Delete"
+              disabled={removing}
             >
               <Trash2 className="size-4" />
             </Button>
           }
           title="Delete subscription?"
           description={`This will permanently remove "${sub.name}". Future transactions will not be generated.`}
-          onConfirm={() => remove()}
+          onConfirm={async () => {
+            await removeAsync();
+          }}
         />
       </div>
     </div>
@@ -388,7 +391,11 @@ export default function SubscriptionsPage() {
 
   // Monthly total: monthly subs + yearly subs normalized to monthly
   const monthlyTotal = active.reduce((sum, s) => sum + toMonthlyFen(s), 0n);
-  const yearlyTotal = monthlyTotal * 12n;
+  // Yearly total: calculate directly from raw amounts to preserve precision
+  const yearlyTotal = active.reduce((sum, s) => {
+    const fen = BigInt(s.amount_fen);
+    return sum + (s.cadence === 'yearly' ? fen : fen * 12n);
+  }, 0n);
 
   const filtered =
     filter === 'all'
@@ -471,7 +478,7 @@ export default function SubscriptionsPage() {
           <p className="text-sm text-[var(--color-muted)]">
             {filter === 'all'
               ? 'No subscriptions yet. Add your first one.'
-              : `No ${SERVICE_TYPE_LABELS[filter]} subscriptions.`}
+              : `No ${SERVICE_TYPE_LABELS[filter] ?? filter} subscriptions.`}
           </p>
         </div>
       ) : (
