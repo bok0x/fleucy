@@ -5,6 +5,7 @@ import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   Dialog,
   DialogContent,
@@ -22,7 +23,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { createCategoryAction, updateCategoryAction } from '@/features/categories/actions';
+import {
+  createCategoryAction,
+  deleteCategoryAction,
+  updateCategoryAction,
+} from '@/features/categories/actions';
 import { CATEGORIES_KEY, useCategories } from '@/features/categories/queries';
 import type { Category } from '@/features/categories/schemas';
 
@@ -93,9 +98,24 @@ function CategoryForm({ onSuccess, defaultValues }: CategoryFormProps) {
 }
 
 function CategoryList({ type }: { type: 'income' | 'expense' }) {
+  const queryClient = useQueryClient();
   const { data, isLoading, isError, refetch } = useCategories(type);
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Category | null>(null);
+
+  const { mutate: deleteCategory, isPending: deleting } = useMutation({
+    mutationFn: (id: string) => deleteCategoryAction(id),
+    onSuccess: (r) => {
+      if (!r.ok) {
+        toast.error(r.error);
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: CATEGORIES_KEY });
+      toast.success('Category deleted');
+      setEditTarget(null);
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
   return (
     <div className="space-y-3">
@@ -168,7 +188,27 @@ function CategoryList({ type }: { type: 'income' | 'expense' }) {
             <DialogTitle>Edit category</DialogTitle>
           </DialogHeader>
           {editTarget && (
-            <CategoryForm defaultValues={editTarget} onSuccess={() => setEditTarget(null)} />
+            <>
+              <CategoryForm defaultValues={editTarget} onSuccess={() => setEditTarget(null)} />
+              <div className="border-t border-[var(--color-border)] pt-3">
+                <ConfirmDialog
+                  title="Delete category"
+                  description="This category will be permanently deleted. This cannot be undone."
+                  confirmLabel="Delete"
+                  variant="destructive"
+                  disabled={deleting}
+                  onConfirm={() => deleteCategory(editTarget.id)}
+                  trigger={
+                    <button
+                      type="button"
+                      className="text-sm text-[var(--color-danger)] hover:underline"
+                    >
+                      Delete category
+                    </button>
+                  }
+                />
+              </div>
+            </>
           )}
         </DialogContent>
       </Dialog>

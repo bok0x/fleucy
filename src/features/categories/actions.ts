@@ -59,3 +59,25 @@ export async function updateCategoryAction(
   if (error) return { ok: false, error: error.message };
   return { ok: true };
 }
+
+export async function deleteCategoryAction(id: string): Promise<CatActionResult> {
+  const { userId } = await auth();
+  if (!userId) redirect('/sign-in');
+
+  const supabase = await supabaseServer();
+  const { error } = await supabase
+    .from('categories')
+    .delete()
+    .eq('id', id)
+    .eq('owner_id', userId)
+    .eq('is_system', false);
+  if (error) {
+    if (error.code === '23503')
+      return {
+        ok: false,
+        error: 'Category is used by existing transactions and cannot be deleted.',
+      };
+    return { ok: false, error: error.message };
+  }
+  return { ok: true };
+}

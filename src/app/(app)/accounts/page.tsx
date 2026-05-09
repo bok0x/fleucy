@@ -26,6 +26,7 @@ import {
 import {
   archiveAccountAction,
   createAccountAction,
+  deleteAccountAction,
   updateAccountAction,
 } from '@/features/accounts/actions';
 import {
@@ -136,6 +137,21 @@ function AccountCard({ acc }: { acc: AccountBalance }) {
     onError: (e) => toast.error(e.message),
   });
 
+  const { mutate: deleteAcc, isPending: deleting } = useMutation({
+    mutationFn: () => deleteAccountAction(acc.account_id),
+    onSuccess: (r) => {
+      if (!r.ok) {
+        toast.error(r.error);
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: ACCOUNTS_KEY });
+      queryClient.invalidateQueries({ queryKey: ACCOUNT_BALANCES_KEY });
+      toast.success('Account deleted');
+      setEditOpen(false);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   return (
     <div className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-card)] p-4">
       <div className="flex items-center justify-between">
@@ -167,10 +183,10 @@ function AccountCard({ acc }: { acc: AccountBalance }) {
               }}
               onSuccess={() => setEditOpen(false)}
             />
-            <div className="border-t border-[var(--color-border)] pt-3">
+            <div className="border-t border-[var(--color-border)] pt-3 flex gap-4">
               <ConfirmDialog
                 title="Archive account"
-                description="This account will be hidden from all views."
+                description="This account will be hidden from all views but its transactions are kept."
                 confirmLabel="Archive"
                 variant="destructive"
                 disabled={archiving}
@@ -181,9 +197,25 @@ function AccountCard({ acc }: { acc: AccountBalance }) {
                 trigger={
                   <button
                     type="button"
+                    className="text-sm text-[var(--color-muted)] hover:underline"
+                  >
+                    Archive
+                  </button>
+                }
+              />
+              <ConfirmDialog
+                title="Delete account"
+                description="This account will be permanently deleted. Accounts with existing transactions cannot be deleted — archive them instead."
+                confirmLabel="Delete"
+                variant="destructive"
+                disabled={deleting}
+                onConfirm={() => deleteAcc()}
+                trigger={
+                  <button
+                    type="button"
                     className="text-sm text-[var(--color-danger)] hover:underline"
                   >
-                    Archive account
+                    Delete
                   </button>
                 }
               />

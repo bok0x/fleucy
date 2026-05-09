@@ -109,3 +109,25 @@ export async function archiveAccountAction(id: string): Promise<AccountActionRes
     return { ok: false, error: err instanceof Error ? err.message : 'Unexpected error' };
   }
 }
+
+export async function deleteAccountAction(id: string): Promise<AccountActionResult> {
+  try {
+    const { userId } = await auth();
+    if (!userId) redirect('/sign-in');
+
+    const supabase = await supabaseServer();
+    const { error } = await supabase.from('accounts').delete().eq('id', id).eq('owner_id', userId);
+    if (error) {
+      if (error.code === '23503')
+        return {
+          ok: false,
+          error: 'Account has existing transactions and cannot be deleted. Archive it instead.',
+        };
+      return { ok: false, error: error.message };
+    }
+    return { ok: true };
+  } catch (err) {
+    if (isRedirectError(err)) throw err;
+    return { ok: false, error: err instanceof Error ? err.message : 'Unexpected error' };
+  }
+}
