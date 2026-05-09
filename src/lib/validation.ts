@@ -3,7 +3,13 @@ import { z } from 'zod';
 export const fenSchema = z
   .string()
   .regex(/^\d+$/, 'Amount must be a non-negative integer in fen')
-  .refine((v) => BigInt(v) <= 9_000_000_000_000_000n, 'Amount is too large');
+  .refine((v) => {
+    try {
+      return BigInt(v) <= 9_000_000_000_000_000n;
+    } catch {
+      return false;
+    }
+  }, 'Amount is too large');
 
 export const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD');
 
