@@ -32,20 +32,26 @@ export function AmountInput({
   }, [value]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value;
-    setDisplay(raw);
+    // Strip everything except digits and dot, then enforce single dot + 2dp
+    let s = e.target.value.replace(/[^\d.]/g, '');
+    const dot = s.indexOf('.');
+    if (dot !== -1) {
+      s =
+        s.slice(0, dot + 1) +
+        s
+          .slice(dot + 1)
+          .replace(/\./g, '')
+          .slice(0, 2);
+    }
 
-    if (raw === '' || raw === '0') {
+    setDisplay(s);
+
+    if (!s || s === '.') {
       onChange(0n);
       return;
     }
-    if (!/^\d+(\.\d{0,2})?$/.test(raw)) return;
-    try {
-      const fen = BigInt(Math.round(Number.parseFloat(raw) * 100));
-      onChange(fen);
-    } catch {
-      // ignore
-    }
+    const fen = BigInt(Math.round(Number.parseFloat(s) * 100));
+    onChange(fen);
   };
 
   return (
