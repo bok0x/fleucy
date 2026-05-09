@@ -200,6 +200,10 @@ model RecurringRule {
   endDate              DateTime? @map("end_date") @db.Date
   lastGeneratedForDate DateTime? @map("last_generated_for_date") @db.Date
   isActive             Boolean   @default(true) @map("is_active")
+  isSubscription       Boolean   @default(false) @map("is_subscription")
+  websiteUrl           String?   @map("website_url")
+  subscriptionNotes    String?   @map("subscription_notes")
+  serviceType          String?   @map("service_type")
   createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
