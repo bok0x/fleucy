@@ -2,7 +2,15 @@
 
 import { UserButton } from '@clerk/nextjs';
 import { AnimatePresence, motion } from 'framer-motion';
-import { LayoutDashboard, ListChecks, Settings, Tag, Users, Wallet } from 'lucide-react';
+import {
+  CreditCard,
+  LayoutDashboard,
+  ListChecks,
+  Settings,
+  Tag,
+  Users,
+  Wallet,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -12,6 +20,7 @@ const items = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/transactions', label: 'Transactions', icon: ListChecks },
   { href: '/accounts', label: 'Accounts', icon: Wallet },
+  { href: '/subscriptions', label: 'Subscriptions', icon: CreditCard },
   { href: '/debts', label: 'Debts', icon: Users },
   { href: '/categories', label: 'Categories', icon: Tag },
   { href: '/settings', label: 'Settings', icon: Settings },

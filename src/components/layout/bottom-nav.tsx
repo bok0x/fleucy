@@ -1,12 +1,13 @@
 'use client';
 
-import { LayoutDashboard, ListChecks, Menu, Users } from 'lucide-react';
+import { CreditCard, LayoutDashboard, ListChecks, Menu, Users } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const items = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/transactions', label: 'Transactions', icon: ListChecks },
+  { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
+  { href: '/transactions', label: 'Txns', icon: ListChecks },
+  { href: '/subscriptions', label: 'Subs', icon: CreditCard },
   { href: '/debts', label: 'Debts', icon: Users },
   { href: '/settings', label: 'Settings', icon: Menu },
 ];
@@ -16,7 +17,7 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-[var(--color-border)] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-[var(--color-border)] md:hidden"
       style={{
         backdropFilter: 'blur(12px)',
         background: 'var(--color-sidebar-glass)',
