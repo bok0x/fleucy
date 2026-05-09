@@ -11,7 +11,7 @@ export function SubscriptionsTile() {
 
   if (isLoading) {
     return (
-      <BentoTile className="md:[grid-column:4/5] md:[grid-row:1/2] h-[120px] animate-pulse">
+      <BentoTile className="md:[grid-column:4/5] md:[grid-row:3/4] h-[120px] animate-pulse">
         <div />
       </BentoTile>
     );
@@ -19,7 +19,7 @@ export function SubscriptionsTile() {
 
   return (
     <BentoTile
-      className="md:[grid-column:4/5] md:[grid-row:1/2]"
+      className="md:[grid-column:4/5] md:[grid-row:3/4]"
       style={{ borderLeft: '3px solid var(--color-primary)' }}
     >
       <div className="flex items-center gap-2 text-xs text-[var(--color-muted)]">
